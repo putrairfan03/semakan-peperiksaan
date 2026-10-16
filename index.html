@@ -84,7 +84,7 @@
       <input type="text" id="manual" placeholder="Atau taip / imbas dengan scanner USB, kemudian Enter" autocomplete="off">
       <button id="btnManual" class="btn">Semak</button>
     </div>
-    <div class="hint">Tip: jarak 15–20 cm, cahaya cukup, letak barcode melintang dalam kotak. Format disokong: Code 39 / Code 128 / QR.</div>
+    <div class="hint">Tip: Jarak 15–20 cm, pencahayaan cukup, posisikan barcode melintang dalam kotak. Format disokong: Code 39 / Code 128 / QR.</div>
     <div id="loading" class="msg info" hidden>Mencari rekod…</div>
   </section>
 
@@ -115,7 +115,7 @@
 </main>
 
 <script>
-  // URL Deployment Google Apps Script anda
+  // URL Deployment Google Apps Script
   var API_URL = 'https://script.google.com/macros/s/AKfycbz8DqnK0w03nqC341Q_sAbAyXzAP0r9vBuoLRZ8Ib4mis2FrXKLvcv7Xx065aRytWD3/exec';
 
   var $ = function (id) { return document.getElementById(id); };
@@ -165,7 +165,7 @@
     if (!window.isSecureContext || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
       html = '<b>Kamera memerlukan sambungan HTTPS yang selamat.</b>';
     } else if (/NotAllowed|Permission|denied/i.test(t)) {
-      html = '<b>Kebenaran kamera ditolak.</b> Sila benarkan akses kamera pada tetapan pelayar anda.';
+      html = '<b>Kebenaran kamera ditolak.</b> Sila benarkan akses kamera dalam tetapan pelayar anda.';
     } else if (/NotFound|Devices/i.test(t)) {
       html = '<b>Tiada kamera dijumpai</b> pada peranti ini.';
     } else {
@@ -181,24 +181,44 @@
     }
     $('camMsg').hidden = true;
     if (running) await stopScan();
+
     try {
       qr = qr || makeQr('reader');
+
       var cfg = {
         fps: 15,
         qrbox: function (vw, vh) {
-          return { 
-            width: Math.floor(Math.min(vw * 0.9, 460)), 
-            height: Math.floor(Math.min(vh * 0.6, 180)) 
-          };
-        }
+          var w = Math.floor(Math.min(vw * 0.85, 360));
+          var h = Math.floor(Math.min(vh * 0.45, 180));
+          return { width: w, height: h };
+        },
+        aspectRatio: 1.0
       };
-      await qr.start(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: 'environment' }, cfg, onScan, function () {});
+
+      // Minta kamera belakang secara automatik jika tiada peranti khusus dipilih
+      var camConfig = deviceId 
+        ? { deviceId: { exact: deviceId } } 
+        : { facingMode: "environment" };
+
+      await qr.start(camConfig, cfg, onScan, function () {});
+      
       running = true;
-      $('btnStart').hidden = true; $('btnStop').hidden = false;
+      $('btnStart').hidden = true; 
+      $('btnStop').hidden = false;
       loadCameras(deviceId);
     } catch (e) {
-      running = false;
-      camError(e);
+      // Sandaran (fallback): jika kekangan persekitaran gagal, cuba buka kamera lalai
+      try {
+        console.warn('Percubaan kamera belakang gagal, beralih ke mod lalai...', e);
+        await qr.start({ facingMode: "user" }, cfg, onScan, function () {});
+        running = true;
+        $('btnStart').hidden = true; 
+        $('btnStop').hidden = false;
+        loadCameras(deviceId);
+      } catch (errFallback) {
+        running = false;
+        camError(errFallback);
+      }
     }
   }
 
@@ -227,7 +247,7 @@
     stopScan().then(function () { lookup(text); });
   }
 
-  /* ================= CARIAN (API FETCH KE APPS SCRIPT) ================= */
+  /* ================= CARIAN API ================= */
   async function lookup(code) {
     busy = true;
     $('loading').hidden = false; $('camMsg').hidden = true;
@@ -300,7 +320,7 @@
       $('lnkView').href = s.slip.viewUrl; $('lnkView').hidden = false;
       $('lnkDl').href = s.slip.downloadUrl; $('lnkDl').hidden = false;
       $('pdfBox').innerHTML = '<iframe class="pdf" src="' + esc(s.slip.previewUrl) + '"></iframe>' +
-        '<div class="hint">Jika PDF tidak muncul, pastikan fail di Drive dikongsi "Anyone with the link – Viewer".</div>';
+        '<div class="hint">Jika PDF tidak muncul, pastikan tetapan fail Google Drive adalah "Anyone with the link – Viewer".</div>';
     } else {
       $('lnkView').hidden = true; $('lnkDl').hidden = true;
       $('pdfBox').innerHTML = '<div class="hint">Pautan slip PDF tiada dalam sheet.</div>';

@@ -3,57 +3,209 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Semakan Keputusan Peperiksaan</title>
+  <title>Semakan Keputusan Peperiksaan | Marvel Edition</title>
+  
+  <!-- Pustaka Barcode Scanner & Confetti Pop -->
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
   <style>
-    :root { --bg: #f3f5f9; --ink: #1c2433; --mut: #667085; --pri: #1d4ed8; --line: #e4e7ec; }
+    :root {
+      --marvel-red: #e23636;
+      --marvel-dark-red: #990000;
+      --marvel-orange: #f97316;
+      --marvel-gold: #facc15;
+      --dark-bg: #0f1117;
+      --card-bg: #1a1d26;
+      --ink: #f8fafc;
+      --mut: #94a3b8;
+      --line: #334155;
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
-    header { background: linear-gradient(135deg, #1e3a8a, #2563eb); color: #fff; padding: 18px 16px; text-align: center; }
-    header h1 { margin: 0; font-size: 20px; }
-    header p { margin: 4px 0 0; font-size: 13px; opacity: .85; }
-    main { max-width: 760px; margin: 0 auto; padding: 14px; }
-    .card { background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(16, 24, 40, .08); }
-    
-    /* Ruang Kamera Live */
-    #reader { width: 100%; min-height: 250px; border-radius: 12px; overflow: hidden; background: #111; margin-bottom: 10px; }
-    #reader video { width: 100% !important; height: auto !important; border-radius: 12px; object-fit: cover; }
-    
-    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
-    .btn { border: 1px solid var(--line); background: #fff; padding: 10px 14px; border-radius: 10px; font-size: 14px; cursor: pointer; color: var(--ink); text-decoration: none; display: inline-block; font-weight: 500; }
-    .btn.primary { background: var(--pri); border-color: var(--pri); color: #fff; font-weight: 600; }
-    input[type=text], select { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 15px; max-width: 100%; }
-    input[type=text] { flex: 1; min-width: 160px; }
-    .msg { margin-top: 10px; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.45; }
-    .msg.err { background: #fef3f2; color: #b42318; border: 1px solid #fecdca; }
-    .msg.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--dark-bg);
+      background-image: radial-gradient(circle at 50% 0%, rgba(226, 54, 54, 0.18), transparent 70%);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* HEADER TEMA MARVEL */
+    header {
+      background: linear-gradient(135deg, var(--marvel-dark-red), #b91c1c, var(--marvel-orange));
+      color: #fff;
+      padding: 24px 16px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(226, 54, 54, 0.35);
+      border-bottom: 2px solid var(--marvel-gold);
+    }
+    .marvel-badge {
+      display: inline-block;
+      background: #fff;
+      color: #e23636;
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing: 2px;
+      padding: 2px 10px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transform: skew(-8deg);
+      margin-bottom: 8px;
+    }
+    header h1 {
+      margin: 4px 0 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    header p { margin: 6px 0 0; font-size: 13px; opacity: .9; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; }
+
+    /* KAD GAYA KOMIK MODEN */
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--line);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--marvel-red), var(--marvel-orange), var(--marvel-gold));
+    }
+
+    /* RUANG KAMERA SCANNER DENGAN ANIMASI LASER */
+    #reader-container {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      border: 2px solid var(--marvel-orange);
+    }
+    #reader { width: 100%; min-height: 240px; background: #000; }
+    #reader video { width: 100% !important; height: auto !important; object-fit: cover; }
+    .scan-laser {
+      position: absolute;
+      left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, #ef4444, #f97316, #ef4444, transparent);
+      box-shadow: 0 0 14px #f97316, 0 0 8px #ef4444;
+      animation: laserMove 2.2s infinite ease-in-out;
+      pointer-events: none;
+      z-index: 10;
+    }
+    @keyframes laserMove {
+      0% { top: 5%; opacity: 0.3; }
+      50% { top: 90%; opacity: 1; }
+      100% { top: 5%; opacity: 0.3; }
+    }
+
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+
+    /* BUTANG BERKILAU */
+    .btn {
+      border: 1px solid var(--line);
+      background: #242938;
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #fff;
+      text-decoration: none;
+      display: inline-block;
+      font-weight: 600;
+      transition: all .2s ease;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--marvel-red), var(--marvel-orange));
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(226, 54, 54, 0.4);
+    }
+    .btn.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(249, 115, 22, 0.5);
+    }
+
+    input[type=text], select {
+      padding: 11px 14px;
+      background: #11141d;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 15px;
+      color: #fff;
+    }
+    input[type=text] { flex: 1; min-width: 170px; }
+    input[type=text]:focus { outline: none; border-color: var(--marvel-orange); }
+
+    .msg { margin-top: 12px; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.45; }
+    .msg.err { background: rgba(185, 28, 28, 0.2); color: #fca5a5; border: 1px solid #b91c1c; }
+    .msg.info { background: rgba(249, 115, 22, 0.15); color: #fdba74; border: 1px solid #ea580c; }
     .hint { font-size: 12px; color: var(--mut); margin-top: 8px; }
     [hidden] { display: none !important; }
-    .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
-    .tab { flex: 1; padding: 10px; border: 0; border-radius: 10px; background: #e8ecf4; font-weight: 600; cursor: pointer; font-size: 14px; }
-    .tab.on { background: var(--pri); color: #fff; }
-    .name { font-size: 20px; font-weight: 700; margin: 0; }
-    .ic { color: var(--mut); font-size: 14px; margin: 2px 0 8px; }
-    .chip { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 13px; font-weight: 600; color: #fff; }
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
-    .stat { background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; padding: 10px; text-align: center; }
-    .stat b { display: block; font-size: 20px; }
+
+    /* TAB NAVIGASI */
+    .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .tab {
+      flex: 1; padding: 12px; border: 0; border-radius: 10px;
+      background: #242938; color: var(--mut); font-weight: 700;
+      cursor: pointer; font-size: 14px; transition: .2s;
+    }
+    .tab.on {
+      background: linear-gradient(135deg, var(--marvel-red), var(--marvel-orange));
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(226, 54, 54, 0.35);
+    }
+
+    /* KAD DASHBOARD PELAJAR */
+    .name { font-size: 22px; font-weight: 800; margin: 0; color: #fff; letter-spacing: 0.5px; }
+    .ic { color: var(--mut); font-size: 14px; margin: 2px 0 10px; }
+    .chip { display: inline-block; padding: 5px 14px; border-radius: 99px; font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
+    .stat {
+      background: #11141d;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    .stat b { display: block; font-size: 22px; color: var(--marvel-gold); }
     .stat span { font-size: 12px; color: var(--mut); }
-    .sub { margin: 12px 0; }
-    .sub .top { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; }
-    .track { position: relative; height: 10px; background: #eef1f6; border-radius: 99px; }
-    .fill { height: 100%; border-radius: 99px; }
-    .mark { position: absolute; top: -3px; width: 2px; height: 16px; background: #111; opacity: .5; }
-    .legend { font-size: 12px; color: var(--mut); margin-top: 6px; }
-    .comment { background: #f8fafc; border-left: 4px solid var(--pri); padding: 10px 12px; border-radius: 8px; font-size: 14px; line-height: 1.5; margin-top: 14px; }
-    .slip { border: 2px solid #111; padding: 18px; background: #fff; }
+
+    .sub { margin: 14px 0; }
+    .sub .top { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; font-weight: 600; }
+    .track { position: relative; height: 12px; background: #262c3d; border-radius: 99px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 99px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+    .mark { position: absolute; top: 0; bottom: 0; width: 3px; background: #fff; box-shadow: 0 0 6px #fff; }
+    .legend { font-size: 12px; color: var(--mut); margin-top: 8px; }
+    .comment {
+      background: #11141d;
+      border-left: 4px solid var(--marvel-orange);
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-top: 16px;
+    }
+
+    /* SLIP PEPERIKSAAN CETAKAN */
+    .slip { border: 2px solid #111; padding: 20px; background: #fff; color: #111; border-radius: 8px; }
     .slip h2 { text-align: center; margin: 0 0 14px; font-size: 18px; letter-spacing: .5px; }
     .slip table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 14px; }
     .slip td, .slip th { border: 1px solid #999; padding: 7px 9px; text-align: left; }
     .slip th { background: #eee; }
     .slip .k { width: 38%; background: #f6f6f6; font-weight: 600; }
-    .pdf { width: 100%; height: 520px; border: 1px solid var(--line); border-radius: 10px; margin-top: 12px; }
-    .center { text-align: center; }
+    .pdf { width: 100%; height: 520px; border: 1px solid var(--line); border-radius: 10px; margin-top: 14px; }
+
     @media print {
       body * { visibility: hidden; }
       #slip, #slip * { visibility: visible; }
@@ -62,42 +214,47 @@
   </style>
 </head>
 <body>
+
 <header>
-  <h1>Semakan Keputusan Peperiksaan</h1>
-  <p>Imbas barcode pada kad pelajar</p>
+  <div class="marvel-badge">MARVEL</div>
+  <h1>SEMAKAN KEPUTUSAN PEPERIKSAAN</h1>
+  <p>Imbas barcode kad pelajar untuk mengaktifkan rekod</p>
 </header>
 
 <main>
-  <!-- ===== PENGIMBAS ===== -->
+  <!-- ===== BAHAGIAN PENGIMBAS ===== -->
   <section id="scanCard" class="card">
-    <div id="reader"></div>
+    <div id="reader-container">
+      <div class="scan-laser" id="laser"></div>
+      <div id="reader"></div>
+    </div>
     <div id="fileReader" hidden></div>
     <div id="camMsg" class="msg" hidden></div>
 
     <div class="row">
-      <button id="btnStart" class="btn primary">📷 Mula Imbas Kamera Belakang</button>
+      <button id="btnStart" class="btn primary">📷 Mula Imbas (Kamera Belakang)</button>
       <button id="btnStop" class="btn" hidden>⏹ Henti</button>
       <select id="camSelect" hidden></select>
-      <label class="btn">📁 Muat naik gambar barcode
+      <label class="btn">📁 Muat naik gambar
         <input type="file" id="fileIn" accept="image/*" capture="environment" hidden>
       </label>
     </div>
 
     <div class="row">
-      <input type="text" id="manual" placeholder="Atau taip / imbas guna scanner USB, tekan Enter" autocomplete="off">
-      <button id="btnManual" class="btn">Semak</button>
+      <input type="text" id="manual" placeholder="Taip No. IC / imbas scanner USB" autocomplete="off">
+      <button id="btnManual" class="btn primary">Semak</button>
     </div>
-    <div class="hint">Tip: Jarak 15–20 cm dari barcode, letakkan barcode secara melintang.</div>
-    <div id="loading" class="msg info" hidden>Sedang mencari rekod pelajar…</div>
+    <div class="hint">⚡ Halakan barcode melintang di bawah garisan laser. Pastikan pencahayaan cukup.</div>
+    <div id="loading" class="msg info" hidden>Sedang memuat data dari pangkalan data...</div>
   </section>
 
-  <!-- ===== KEPUTUSAN ===== -->
+  <!-- ===== BAHAGIAN KEPUTUSAN ===== -->
   <section id="result" hidden>
-    <div class="row" style="margin:0 0 12px">
-      <button id="btnAgain" class="btn primary">🔄 Imbas pelajar lain</button>
+    <div class="row" style="margin:0 0 14px">
+      <button id="btnAgain" class="btn primary">🔄 Imbas Pelajar Lain</button>
     </div>
     <div class="tabs">
-      <button class="tab on" data-tab="dash">Dashboard</button>
+      <button class="tab on" data-tab="dash">Dashboard Prestasi</button>
       <button class="tab" data-tab="slipTab">Slip Peperiksaan</button>
     </div>
 
@@ -107,9 +264,9 @@
       <div class="card">
         <div id="slip" class="slip"></div>
         <div class="row">
-          <button class="btn primary" onclick="window.print()">🖨 Cetak slip</button>
+          <button class="btn primary" onclick="window.print()">🖨 Cetak Slip</button>
           <a id="lnkView" class="btn" target="_blank" rel="noopener">Buka PDF</a>
-          <a id="lnkDl" class="btn" target="_blank" rel="noopener">⬇ Muat turun PDF</a>
+          <a id="lnkDl" class="btn" target="_blank" rel="noopener">⬇ Muat Turun PDF</a>
         </div>
         <div id="pdfBox"></div>
       </div>
@@ -122,10 +279,16 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var GP = { 'A+': 0, 'A': 1, 'A-': 2, 'B+': 3, 'B': 4, 'C+': 5, 'C': 6, 'D': 7, 'E': 8, 'F': 9 };
+  
+  // Warna status bertema Marvel
   var STATUS_COLOR = {
-    'Cemerlang': '#16a34a', 'Kepujian': '#2563eb', 'Memuaskan': '#d97706',
-    'Mencapai Tahap Minimum': '#ea580c', 'Perlu Bimbingan': '#dc2626'
+    'Cemerlang': 'linear-gradient(135deg, #e23636, #f97316)',
+    'Kepujian': 'linear-gradient(135deg, #f97316, #facc15)',
+    'Memuaskan': 'linear-gradient(135deg, #0284c7, #2563eb)',
+    'Mencapai Tahap Minimum': 'linear-gradient(135deg, #ea580c, #b45309)',
+    'Perlu Bimbingan': 'linear-gradient(135deg, #7f1d1d, #991b1b)'
   };
+  
   var html5QrCode = null, fileQr = null, running = false, busy = false;
 
   function esc(s) {
@@ -133,14 +296,31 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function gradeColor(p) { return p <= 1 ? '#16a34a' : p <= 3 ? '#2563eb' : p <= 5 ? '#f59e0b' : p <= 7 ? '#f97316' : '#dc2626'; }
+
+  function gradeGradient(p) {
+    return p <= 1 ? 'linear-gradient(90deg, #f59e0b, #e23636)' : 
+           p <= 3 ? 'linear-gradient(90deg, #f97316, #facc15)' : 
+           p <= 5 ? 'linear-gradient(90deg, #3b82f6, #06b6d4)' : 
+           'linear-gradient(90deg, #64748b, #475467)';
+  }
+
+  function popHeroConfetti() {
+    if (typeof confetti === 'function') {
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#e23636', '#f97316', '#facc15', '#ffffff']
+      });
+    }
+  }
 
   function beep() {
     try {
       var c = new (window.AudioContext || window.webkitAudioContext)();
-      var o = c.createOscillator(); o.type = 'square'; o.frequency.value = 1000;
+      var o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 880;
       o.connect(c.destination); o.start();
-      setTimeout(function () { o.stop(); c.close(); }, 120);
+      setTimeout(function () { o.stop(); c.close(); }, 140);
     } catch (e) {}
   }
 
@@ -159,7 +339,6 @@
 
     try {
       if (!html5QrCode) {
-        // Matikan BarCodeDetector bawaan pelayar bagi mengelakkan pepijat skrin hitam Chrome
         html5QrCode = new Html5Qrcode('reader', {
           formatsToSupport: [
             Html5QrcodeSupportedFormats.CODE_39,
@@ -172,7 +351,6 @@
         });
       }
 
-      // Senaraikan kamera dan utamakan kamera belakang
       var devices = await Html5Qrcode.getCameras();
       var chosenId = targetDeviceId;
 
@@ -184,7 +362,6 @@
         sel.hidden = devices.length < 2;
 
         if (!chosenId) {
-          // Cari kamera belakang secara pintar melalui label
           var backCam = devices.find(function (d) {
             return /back|rear|environment|belakang/i.test(d.label);
           });
@@ -197,10 +374,8 @@
 
       var config = {
         fps: 15,
-        qrbox: function (viewfinderWidth, viewfinderHeight) {
-          var width = Math.floor(Math.min(viewfinderWidth * 0.85, 360));
-          var height = Math.floor(Math.min(viewfinderHeight * 0.45, 180));
-          return { width: width, height: height };
+        qrbox: function (w, h) {
+          return { width: Math.floor(Math.min(w * 0.85, 360)), height: Math.floor(Math.min(h * 0.45, 180)) };
         }
       };
 
@@ -208,9 +383,11 @@
       running = true;
       $('btnStart').hidden = true;
       $('btnStop').hidden = false;
+      $('laser').hidden = false;
     } catch (err) {
       running = false;
-      showCamMsg('<b>Kamera gagal dibuka:</b> ' + esc(err.message || err) + '<br>Pastikan kebenaran kamera dibenarkan atau cuba tukar pilihan kamera di menu dropdown.', 'err');
+      $('laser').hidden = true;
+      showCamMsg('<b>Kamera gagal dihidupkan:</b> ' + esc(err.message || err), 'err');
     }
   }
 
@@ -221,6 +398,7 @@
     running = false;
     $('btnStart').hidden = false;
     $('btnStop').hidden = true;
+    $('laser').hidden = true;
   }
 
   function onScan(decodedText) {
@@ -230,7 +408,7 @@
     stopScan().then(function () { lookup(decodedText); });
   }
 
-  /* ================= CARIAN API ================= */
+  /* ================= AMBIL DATA DARI APPS SCRIPT ================= */
   async function lookup(code) {
     busy = true;
     $('loading').hidden = false; $('camMsg').hidden = true;
@@ -257,30 +435,30 @@
 
   /* ================= PAPARAN KEPUTUSAN ================= */
   function render(s) {
-    var color = STATUS_COLOR[s.status] || '#475467';
+    var bgChip = STATUS_COLOR[s.status] || 'linear-gradient(135deg, #475467, #334155)';
 
     var bars = s.subjects.map(function (x) {
       var p = GP[x.grade.toUpperCase()];
       var known = p !== undefined;
-      var w = known ? Math.max(6, ((9 - p) / 9) * 100) : 0;
+      var w = known ? Math.max(8, ((9 - p) / 9) * 100) : 0;
       var avg = s.classAvg[x.name];
       var mark = avg == null ? '' : '<div class="mark" style="left:' + (((9 - avg) / 9) * 100) + '%"></div>';
-      return '<div class="sub"><div class="top"><span>' + esc(x.name) + '</span><b>' + esc(x.grade) + '</b></div>' +
-             '<div class="track"><div class="fill" style="width:' + w + '%;background:' + (known ? gradeColor(p) : '#999') + '"></div>' + mark + '</div></div>';
+      return '<div class="sub"><div class="top"><span>' + esc(x.name) + '</span><b style="color:var(--marvel-gold)">' + esc(x.grade) + '</b></div>' +
+             '<div class="track"><div class="fill" style="width:' + w + '%;background:' + (known ? gradeGradient(p) : '#64748b') + '"></div>' + mark + '</div></div>';
     }).join('');
 
     $('dash').innerHTML =
       '<p class="name">' + esc(s.nama) + '</p>' +
-      '<p class="ic">' + esc(s.ic) + '</p>' +
-      '<span class="chip" style="background:' + color + '">' + esc(s.status) + '</span>' +
+      '<p class="ic">No. Kad Pengenalan: ' + esc(s.ic) + '</p>' +
+      '<span class="chip" style="background:' + bgChip + '">' + esc(s.status) + '</span>' +
       '<div class="stats">' +
         '<div class="stat"><b>' + esc(s.kedudukan) + ' / ' + esc(s.total) + '</b><span>Kedudukan</span></div>' +
         '<div class="stat"><b>' + esc(s.purata) + '</b><span>Gred Purata</span></div>' +
         '<div class="stat"><b>' + esc(s.subjects.length) + '</b><span>Subjek</span></div>' +
       '</div>' +
       bars +
-      '<div class="legend">Panjang bar = markah pelajar. Garis tegak = purata kelas.</div>' +
-      '<div class="comment">' + esc(s.ulasan) + '</div>';
+      '<div class="legend">Bar Berwarna = Prestasi Pelajar. Garis Putih = Purata Kelas.</div>' +
+      '<div class="comment"><b>Ulasan Guru:</b> ' + esc(s.ulasan) + '</div>';
 
     var rows = s.subjects.map(function (x) {
       return '<tr><td>' + esc(x.name) + '</td><td><b>' + esc(x.grade) + '</b></td></tr>';
@@ -302,17 +480,21 @@
     if (s.slip) {
       $('lnkView').href = s.slip.viewUrl; $('lnkView').hidden = false;
       $('lnkDl').href = s.slip.downloadUrl; $('lnkDl').hidden = false;
-      $('pdfBox').innerHTML = '<iframe class="pdf" src="' + esc(s.slip.previewUrl) + '"></iframe>' +
-        '<div class="hint">Jika PDF tidak muncul, pastikan tetapan fail Google Drive adalah "Anyone with the link – Viewer".</div>';
+      $('pdfBox').innerHTML = '<iframe class="pdf" src="' + esc(s.slip.previewUrl) + '"></iframe>';
     } else {
       $('lnkView').hidden = true; $('lnkDl').hidden = true;
-      $('pdfBox').innerHTML = '<div class="hint">Pautan slip PDF tiada dalam sheet.</div>';
+      $('pdfBox').innerHTML = '<div class="hint">Pautan slip PDF tiada dalam rekod.</div>';
     }
 
     switchTab('dash');
     $('scanCard').hidden = true;
     $('result').hidden = false;
     window.scrollTo(0, 0);
+
+    // Letupkan konfeti jika mencapai keputusan cemerlang
+    if (/cemerlang|kepujian/i.test(s.status)) {
+      popHeroConfetti();
+    }
   }
 
   function switchTab(name) {
@@ -328,7 +510,7 @@
     startScan($('camSelect').value);
   }
 
-  /* ================= BUTANG & EVENT ================= */
+  /* ================= PENGENDALI BUTANG ================= */
   $('btnStart').onclick = function () { startScan(); };
   $('btnStop').onclick = stopScan;
   $('camSelect').onchange = function () { startScan(this.value); };
@@ -352,7 +534,7 @@
       beep();
       lookup(text);
     } catch (e) {
-      showCamMsg('Barcode tidak dapat dibaca daripada gambar. Sila pastikan foto dekat dan tajam.', 'err');
+      showCamMsg('Barcode tidak dapat dikesan daripada imej tersebut.', 'err');
     }
     this.value = '';
   });
